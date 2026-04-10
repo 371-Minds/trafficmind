@@ -1,5 +1,12 @@
 import { getDb } from './db';
 
+// Converts a decimal price string (e.g. '29.99') to integer cents (2999).
+// Returns 0 if the input is missing or not a valid number.
+function decimalToCents(amount) {
+  const parsed = parseFloat(amount);
+  return !isNaN(parsed) ? Math.round(parsed * 100) : 0;
+}
+
 const COINBASE_API_BASE = 'https://api.commerce.coinbase.com';
 
 async function coinbaseFetch(path, apiKey) {
@@ -119,9 +126,7 @@ export async function syncCoinbasePayments() {
           // Extract local price in cents
           const localPrice = charge.pricing?.local;
           const currency = (localPrice?.currency || 'usd').toLowerCase();
-          // Convert to cents (Coinbase returns decimal amounts like "29.99")
-          const parsedAmount = parseFloat(localPrice?.amount);
-          const amount = !isNaN(parsedAmount) ? Math.round(parsedAmount * 100) : 0;
+          const amount = decimalToCents(localPrice?.amount);
 
           const customerEmail = charge.metadata?.customer_email || null;
 
