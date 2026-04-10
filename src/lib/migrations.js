@@ -322,6 +322,15 @@ const migrations = [
       CREATE INDEX idx_gsc_devices_site_date ON gsc_daily_devices(site_id, date);
     `);
   },
+  // Migration 10: Add Creem, Polar, Coinbase Commerce keys; add provider to conversions
+  (db) => {
+    db.exec(`
+      ALTER TABLE sites ADD COLUMN creem_api_key TEXT;
+      ALTER TABLE sites ADD COLUMN polar_api_key TEXT;
+      ALTER TABLE sites ADD COLUMN coinbase_commerce_api_key TEXT;
+      ALTER TABLE conversions ADD COLUMN provider TEXT DEFAULT 'stripe';
+    `);
+  },
 ];
 
 export function runMigrations(db) {
