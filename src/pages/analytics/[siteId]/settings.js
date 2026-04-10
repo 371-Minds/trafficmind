@@ -56,10 +56,26 @@ export default function SiteSettings() {
   const [site, setSite] = useState(null);
   const [loading, setLoading] = useState(true);
   const [snippetData, setSnippetData] = useState(null);
+
   const [stripeSecretKey, setStripeSecretKey] = useState('');
   const [stripeSaving, setStripeSaving] = useState(false);
   const [stripeMessage, setStripeMessage] = useState('');
   const [stripeError, setStripeError] = useState('');
+
+  const [creemApiKey, setCreemApiKey] = useState('');
+  const [creemSaving, setCreemSaving] = useState(false);
+  const [creemMessage, setCreemMessage] = useState('');
+  const [creemError, setCreemError] = useState('');
+
+  const [polarApiKey, setPolarApiKey] = useState('');
+  const [polarSaving, setPolarSaving] = useState(false);
+  const [polarMessage, setPolarMessage] = useState('');
+  const [polarError, setPolarError] = useState('');
+
+  const [coinbaseApiKey, setCoinbaseApiKey] = useState('');
+  const [coinbaseSaving, setCoinbaseSaving] = useState(false);
+  const [coinbaseMessage, setCoinbaseMessage] = useState('');
+  const [coinbaseError, setCoinbaseError] = useState('');
 
   useEffect(() => {
     if (!siteId) return;
@@ -73,6 +89,9 @@ export default function SiteSettings() {
           const data = await siteRes.json();
           setSite(data.site);
           setStripeSecretKey(data.site.stripe_secret_key || '');
+          setCreemApiKey(data.site.creem_api_key || '');
+          setPolarApiKey(data.site.polar_api_key || '');
+          setCoinbaseApiKey(data.site.coinbase_commerce_api_key || '');
         }
         if (snippetRes.ok) {
           setSnippetData(await snippetRes.json());
@@ -82,6 +101,7 @@ export default function SiteSettings() {
       }
     })();
   }, [siteId]);
+
 
   const handleSaveStripe = async (e) => {
     e.preventDefault();
@@ -110,6 +130,96 @@ export default function SiteSettings() {
       setStripeError(err.message);
     } finally {
       setStripeSaving(false);
+    }
+  };
+
+  const handleSaveCreem = async (e) => {
+    e.preventDefault();
+    setCreemSaving(true);
+    setCreemMessage('');
+    setCreemError('');
+    try {
+      const body = {};
+      if (creemApiKey && !creemApiKey.startsWith('••••')) {
+        body.creem_api_key = creemApiKey;
+      }
+      if (Object.keys(body).length === 0) {
+        setCreemMessage('No changes to save');
+        return;
+      }
+      const res = await fetch(`/api/sites/${siteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setCreemApiKey(data.site.creem_api_key || '');
+      setCreemMessage('Creem API key saved');
+    } catch (err) {
+      setCreemError(err.message);
+    } finally {
+      setCreemSaving(false);
+    }
+  };
+
+  const handleSavePolar = async (e) => {
+    e.preventDefault();
+    setPolarSaving(true);
+    setPolarMessage('');
+    setPolarError('');
+    try {
+      const body = {};
+      if (polarApiKey && !polarApiKey.startsWith('••••')) {
+        body.polar_api_key = polarApiKey;
+      }
+      if (Object.keys(body).length === 0) {
+        setPolarMessage('No changes to save');
+        return;
+      }
+      const res = await fetch(`/api/sites/${siteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setPolarApiKey(data.site.polar_api_key || '');
+      setPolarMessage('Polar API key saved');
+    } catch (err) {
+      setPolarError(err.message);
+    } finally {
+      setPolarSaving(false);
+    }
+  };
+
+  const handleSaveCoinbase = async (e) => {
+    e.preventDefault();
+    setCoinbaseSaving(true);
+    setCoinbaseMessage('');
+    setCoinbaseError('');
+    try {
+      const body = {};
+      if (coinbaseApiKey && !coinbaseApiKey.startsWith('••••')) {
+        body.coinbase_commerce_api_key = coinbaseApiKey;
+      }
+      if (Object.keys(body).length === 0) {
+        setCoinbaseMessage('No changes to save');
+        return;
+      }
+      const res = await fetch(`/api/sites/${siteId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setCoinbaseApiKey(data.site.coinbase_commerce_api_key || '');
+      setCoinbaseMessage('Coinbase Commerce API key saved');
+    } catch (err) {
+      setCoinbaseError(err.message);
+    } finally {
+      setCoinbaseSaving(false);
     }
   };
 
@@ -168,8 +278,36 @@ export default function SiteSettings() {
                   onCopy={() => copyToClipboard(snippetData.stripeSnippet)}
                   highlightPatterns={['metadata', 'ts_visitor_id', 'ts_session_id']}
                 />
+
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 16 }}>
+                  For Creem.io conversion tracking:
+                </p>
+                <CodeBlock
+                  code={snippetData.creemSnippet}
+                  onCopy={() => copyToClipboard(snippetData.creemSnippet)}
+                  highlightPatterns={['metadata', 'ts_visitor_id', 'ts_session_id']}
+                />
+
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 16 }}>
+                  For Polar.sh conversion tracking:
+                </p>
+                <CodeBlock
+                  code={snippetData.polarSnippet}
+                  onCopy={() => copyToClipboard(snippetData.polarSnippet)}
+                  highlightPatterns={['metadata', 'ts_visitor_id', 'ts_session_id']}
+                />
+
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 16 }}>
+                  For Coinbase Commerce crypto payment tracking:
+                </p>
+                <CodeBlock
+                  code={snippetData.coinbaseSnippet}
+                  onCopy={() => copyToClipboard(snippetData.coinbaseSnippet)}
+                  highlightPatterns={['metadata', 'ts_visitor_id', 'ts_session_id']}
+                />
+
                 <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
-                  Traffic Source will automatically sync payments from Stripe. No webhook setup needed.
+                  Traffic Source automatically syncs payments from all providers. No webhook setup needed.
                 </p>
               </>
             ) : (
@@ -208,6 +346,108 @@ export default function SiteSettings() {
               </div>
               <button type="submit" className="btn btn-primary" disabled={stripeSaving} style={{ alignSelf: 'flex-start' }}>
                 {stripeSaving ? 'Saving...' : 'Save Key'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* ── Creem.io Settings ── */}
+        <div className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-header">
+            <div className="panel-tabs">
+              <button className="panel-tab active">Creem.io</button>
+            </div>
+          </div>
+          <div className="panel-body" style={{ padding: 20 }}>
+            {creemMessage && (
+              <div style={{ background: 'var(--success-light)', color: 'var(--success)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 12 }}>
+                {creemMessage}
+              </div>
+            )}
+            {creemError && <div className="auth-error">{creemError}</div>}
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+              Enter your Creem.io API Key to automatically sync payments. Find it in your Creem dashboard under Settings &gt; API.
+            </p>
+            <form onSubmit={handleSaveCreem} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="form-group">
+                <label>Creem API Key</label>
+                <input
+                  type="password"
+                  value={creemApiKey}
+                  onChange={(e) => setCreemApiKey(e.target.value)}
+                  placeholder="creem_..."
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={creemSaving} style={{ alignSelf: 'flex-start' }}>
+                {creemSaving ? 'Saving...' : 'Save Key'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* ── Polar.sh Settings ── */}
+        <div className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-header">
+            <div className="panel-tabs">
+              <button className="panel-tab active">Polar.sh</button>
+            </div>
+          </div>
+          <div className="panel-body" style={{ padding: 20 }}>
+            {polarMessage && (
+              <div style={{ background: 'var(--success-light)', color: 'var(--success)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 12 }}>
+                {polarMessage}
+              </div>
+            )}
+            {polarError && <div className="auth-error">{polarError}</div>}
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+              Enter your Polar.sh API Key to automatically sync orders. Find it in your Polar dashboard under Settings &gt; Developers.
+            </p>
+            <form onSubmit={handleSavePolar} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="form-group">
+                <label>Polar API Key</label>
+                <input
+                  type="password"
+                  value={polarApiKey}
+                  onChange={(e) => setPolarApiKey(e.target.value)}
+                  placeholder="polar_..."
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={polarSaving} style={{ alignSelf: 'flex-start' }}>
+                {polarSaving ? 'Saving...' : 'Save Key'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* ── Coinbase Commerce Settings ── */}
+        <div className="panel" style={{ marginBottom: 20 }}>
+          <div className="panel-header">
+            <div className="panel-tabs">
+              <button className="panel-tab active">Coinbase Commerce</button>
+            </div>
+          </div>
+          <div className="panel-body" style={{ padding: 20 }}>
+            {coinbaseMessage && (
+              <div style={{ background: 'var(--success-light)', color: 'var(--success)', padding: '10px 14px', borderRadius: 'var(--radius)', fontSize: 13, marginBottom: 12 }}>
+                {coinbaseMessage}
+              </div>
+            )}
+            {coinbaseError && <div className="auth-error">{coinbaseError}</div>}
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
+              Enter your Coinbase Commerce API Key to automatically sync crypto payments. Find it in your Coinbase Commerce dashboard under Settings &gt; API keys.
+            </p>
+            <form onSubmit={handleSaveCoinbase} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="form-group">
+                <label>Coinbase Commerce API Key</label>
+                <input
+                  type="password"
+                  value={coinbaseApiKey}
+                  onChange={(e) => setCoinbaseApiKey(e.target.value)}
+                  placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                />
+              </div>
+              <button type="submit" className="btn btn-primary" disabled={coinbaseSaving} style={{ alignSelf: 'flex-start' }}>
+                {coinbaseSaving ? 'Saving...' : 'Save Key'}
               </button>
             </form>
           </div>

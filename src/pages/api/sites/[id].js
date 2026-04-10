@@ -21,11 +21,20 @@ export default withAuth(function handler(req, res) {
     if (maskedSite.stripe_webhook_secret) {
       maskedSite.stripe_webhook_secret = '••••' + maskedSite.stripe_webhook_secret.slice(-4);
     }
+    if (maskedSite.creem_api_key) {
+      maskedSite.creem_api_key = '••••' + maskedSite.creem_api_key.slice(-4);
+    }
+    if (maskedSite.polar_api_key) {
+      maskedSite.polar_api_key = '••••' + maskedSite.polar_api_key.slice(-4);
+    }
+    if (maskedSite.coinbase_commerce_api_key) {
+      maskedSite.coinbase_commerce_api_key = '••••' + maskedSite.coinbase_commerce_api_key.slice(-4);
+    }
     return res.status(200).json({ site: maskedSite });
   }
 
   if (req.method === 'PUT') {
-    const { domain, name, stripe_secret_key } = req.body;
+    const { domain, name, stripe_secret_key, creem_api_key, polar_api_key, coinbase_commerce_api_key } = req.body;
     const cleanDomain = domain
       ? domain.replace(/^https?:\/\//, '').replace(/\/+$/, '')
       : site.domain;
@@ -43,6 +52,27 @@ export default withAuth(function handler(req, res) {
       );
     }
 
+    if (creem_api_key !== undefined) {
+      db.prepare('UPDATE sites SET creem_api_key = ? WHERE id = ?').run(
+        creem_api_key || null,
+        id
+      );
+    }
+
+    if (polar_api_key !== undefined) {
+      db.prepare('UPDATE sites SET polar_api_key = ? WHERE id = ?').run(
+        polar_api_key || null,
+        id
+      );
+    }
+
+    if (coinbase_commerce_api_key !== undefined) {
+      db.prepare('UPDATE sites SET coinbase_commerce_api_key = ? WHERE id = ?').run(
+        coinbase_commerce_api_key || null,
+        id
+      );
+    }
+
     const updated = db.prepare('SELECT * FROM sites WHERE id = ?').get(id);
     const maskedUpdated = { ...updated };
     if (maskedUpdated.stripe_secret_key) {
@@ -50,6 +80,15 @@ export default withAuth(function handler(req, res) {
     }
     if (maskedUpdated.stripe_webhook_secret) {
       maskedUpdated.stripe_webhook_secret = '••••' + maskedUpdated.stripe_webhook_secret.slice(-4);
+    }
+    if (maskedUpdated.creem_api_key) {
+      maskedUpdated.creem_api_key = '••••' + maskedUpdated.creem_api_key.slice(-4);
+    }
+    if (maskedUpdated.polar_api_key) {
+      maskedUpdated.polar_api_key = '••••' + maskedUpdated.polar_api_key.slice(-4);
+    }
+    if (maskedUpdated.coinbase_commerce_api_key) {
+      maskedUpdated.coinbase_commerce_api_key = '••••' + maskedUpdated.coinbase_commerce_api_key.slice(-4);
     }
     return res.status(200).json({ site: maskedUpdated });
   }
