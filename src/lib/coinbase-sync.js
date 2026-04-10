@@ -120,7 +120,8 @@ export async function syncCoinbasePayments() {
           const localPrice = charge.pricing?.local;
           const currency = (localPrice?.currency || 'usd').toLowerCase();
           // Convert to cents (Coinbase returns decimal amounts like "29.99")
-          const amount = localPrice?.amount ? Math.round(parseFloat(localPrice.amount) * 100) : 0;
+          const parsedAmount = parseFloat(localPrice?.amount);
+          const amount = !isNaN(parsedAmount) ? Math.round(parsedAmount * 100) : 0;
 
           const customerEmail = charge.metadata?.customer_email || null;
 
