@@ -1,10 +1,10 @@
-# Traffic Source
+# TrafficMind
 
 Open-source, self-hosted web analytics with conversion tracking and affiliate management. Deploy on a $4 VPS, own your data forever.
 
 **No monthly fees. No data sharing. No limits.**
 
-![Traffic Source Dashboard](demo-image.png)
+![TrafficMind Dashboard](demo-image.png)
 
 Built by the team behind [SuperDevPro](https://superdevpro.com) · [NoCode Web Scraper](https://nocodewebscraper.com) · [CrawlAPI](https://crawlapi.dev) · [MailLayer](https://maillayer.com) · [ClickDash](https://clickdash.io)
 
@@ -15,7 +15,7 @@ Built by the team behind [SuperDevPro](https://superdevpro.com) · [NoCode Web S
 - **Geo Tracking** — Country and city-level visitor data via Cloudflare proxy headers
 - **Device & Browser** — Browser, OS, device type, and screen resolution breakdowns
 - **Google Search Console** — One-click connect, drill into any keyword to see its pages, countries, and devices on a single screen
-- **Conversion Tracking** — Stripe integration that auto-syncs payments every 60 seconds — no webhooks needed
+- **Conversion Tracking** — Stripe, Creem, Polar, and Coinbase Commerce integrations that auto-sync payments every 60 seconds — no webhooks needed
 - **Affiliate System** — Create affiliates with custom commission rates, shareable referral links, and public dashboards
 - **Visitor Journeys** — Full session replay showing every page a visitor viewed before converting
 - **Multi-site** — Track multiple websites from a single dashboard
@@ -27,10 +27,11 @@ Built by the team behind [SuperDevPro](https://superdevpro.com) · [NoCode Web S
 
 - **Framework:** Next.js 16 + React 19
 - **Database:** SQLite (better-sqlite3) with WAL mode
-- **Payments:** Stripe API (polling-based, no webhooks)
+- **Payments:** Stripe, Creem, Polar, and Coinbase Commerce (polling-based, no webhooks)
 - **Auth:** JWT with httpOnly cookies
 - **Styling:** SASS
 - **Charts:** Recharts
+- **Package Manager:** Bun
 
 ## Quick Start
 
@@ -51,9 +52,9 @@ No VPS setup needed — deploy in one click and you're live in under a minute.
 #### 1. Clone and install
 
 ```bash
-git clone https://github.com/mddanishyusuf/traffic-source.git
-cd traffic-source
-npm install
+git clone https://github.com/371-Minds/trafficmind.git
+cd trafficmind
+bun install
 ```
 
 #### 2. Configure environment
@@ -80,8 +81,8 @@ openssl rand -hex 32
 #### 3. Build and run
 
 ```bash
-npm run build
-npm start
+bun run build
+bun run start
 ```
 
 The app runs on port 3000 by default.
@@ -106,7 +107,7 @@ Visit your domain and register. Only the first user can register — after that,
 npm install -g pm2
 
 # Start the app
-pm2 start npm --name "trafficsource" -- start
+pm2 start bun --name "trafficmind" -- run start
 
 # Auto-restart on reboot
 pm2 startup
@@ -118,7 +119,7 @@ pm2 save
 The included deploy script pulls latest changes, builds in a temp directory, swaps atomically, and restarts PM2:
 
 ```bash
-npm run deploy
+bun run deploy
 ```
 
 ### Nginx reverse proxy
@@ -158,7 +159,11 @@ That's it. The script automatically tracks:
 - Screen dimensions
 - Affiliate referrals (`?ref=affiliate-slug`)
 
-## Stripe Conversion Tracking
+## Conversion Tracking
+
+TrafficMind supports four payment providers, all polling-based — no webhook setup required. Each sync runs automatically every 60 seconds via the `/api/cron/sync-all` endpoint.
+
+### Stripe
 
 1. Go to your site's Settings and add your Stripe Secret Key
 2. When creating Stripe Checkout Sessions in your app, pass the visitor tracking IDs:
@@ -173,13 +178,49 @@ const session = await stripe.checkout.sessions.create({
 });
 ```
 
-Traffic Source polls Stripe every 60 seconds and automatically matches payments to visitor sessions — no webhook setup required.
+### Creem
+
+1. Go to your site's Settings and add your Creem API Key
+2. Pass the visitor tracking IDs in your Creem checkout metadata:
+
+```javascript
+metadata: {
+  ts_visitor_id: window.__ts.vid,
+  ts_session_id: window.__ts.sid(),
+}
+```
+
+### Polar
+
+1. Go to your site's Settings and add your Polar API Key
+2. Pass the visitor tracking IDs in your Polar order metadata:
+
+```javascript
+metadata: {
+  ts_visitor_id: window.__ts.vid,
+  ts_session_id: window.__ts.sid(),
+}
+```
+
+### Coinbase Commerce
+
+1. Go to your site's Settings and add your Coinbase Commerce API Key
+2. Pass the visitor tracking IDs in your charge metadata:
+
+```javascript
+metadata: {
+  ts_visitor_id: window.__ts.vid,
+  ts_session_id: window.__ts.sid(),
+}
+```
+
+TrafficMind polls each provider every 60 seconds and automatically matches payments to visitor sessions.
 
 ## Google Search Console
 
-Connect your Google Search Console once and link any site to its property with a single click. Traffic Source keeps the last 90 days of keyword data and surfaces what's actually actionable: winners, losers, opportunities, quick wins, and a keyword explorer that shows pages, countries, and devices for any single query — something GSC's own UI doesn't surface together.
+Connect your Google Search Console once and link any site to its property with a single click. TrafficMind keeps the last 90 days of keyword data and surfaces what's actually actionable: winners, losers, opportunities, quick wins, and a keyword explorer that shows pages, countries, and devices for any single query — something GSC's own UI doesn't surface together.
 
-### One-time setup (per Traffic Source instance)
+### One-time setup (per TrafficMind instance)
 
 You need a Google Cloud OAuth client. Anyone using this instance shares the same client — you only do this once.
 
@@ -191,8 +232,8 @@ You need a Google Cloud OAuth client. Anyone using this instance shares the same
    - Add yourself (and any other users) under **Test users**
 4. **Create OAuth credentials** — [Credentials](https://console.cloud.google.com/apis/credentials) → **Create credentials → OAuth client ID**
    - Application type: **Web application**
-   - Under **Authorized redirect URIs**, paste the URI shown in Traffic Source → **Settings → Integrations** (auto-detected from your deployed domain)
-5. **Save Client ID + Client Secret in Traffic Source** — Settings → Integrations → paste both → Save
+   - Under **Authorized redirect URIs**, paste the URI shown in TrafficMind → **Settings → Integrations** (auto-detected from your deployed domain)
+5. **Save Client ID + Client Secret in TrafficMind** — Settings → Integrations → paste both → Save
 6. **Click "Connect Google Search Console"** — authorize once, done
 
 Credentials and refresh tokens are encrypted at rest with AES-256-GCM. The encryption key is auto-generated on first use and stored in `data/.appkey` (back this up alongside the database).
@@ -216,13 +257,13 @@ When a visitor arrives via a referral link and later converts, the affiliate is 
 |----------|----------|---------|-------------|
 | `JWT_SECRET` | Yes | — | Random hex string for signing auth tokens |
 | `JWT_EXPIRY` | No | `7d` | Auth token expiry duration |
-| `NEXT_PUBLIC_APP_URL` | Yes | — | Public URL of your Traffic Source instance |
+| `NEXT_PUBLIC_APP_URL` | Yes | — | Public URL of your TrafficMind instance |
 | `DATABASE_PATH` | No | `./data/analytics.db` | Path to SQLite database file |
 | `CRON_SECRET` | No | — | Secret for protecting cron endpoints |
 
 ## Database
 
-Traffic Source uses SQLite with WAL mode — no external database to set up or maintain. The database file lives at `DATABASE_PATH` and includes automatic migrations.
+TrafficMind uses SQLite with WAL mode — no external database to set up or maintain. The database file lives at `DATABASE_PATH` and includes automatic migrations.
 
 **Backup your database:**
 
@@ -243,9 +284,19 @@ cp ./data/analytics.db ./data/analytics-backup-$(date +%Y%m%d).db
 │   ├── hooks/                  # useAnalytics, custom hooks
 │   ├── lib/
 │   │   ├── db.js               # Database connection & migrations
+│   │   ├── migrations.js       # Schema migration definitions
 │   │   ├── analytics.js        # Analytics query logic
 │   │   ├── auth.js             # JWT & password helpers
+│   │   ├── crypto.js           # AES-256-GCM encryption utilities
+│   │   ├── formatters.js       # Number/date formatting helpers
+│   │   ├── maintenance.js      # DB maintenance utilities
+│   │   ├── iso-countries.js    # ISO country code lookup
 │   │   ├── stripe-sync.js      # Stripe payment polling
+│   │   ├── creem-sync.js       # Creem payment polling
+│   │   ├── polar-sync.js       # Polar payment polling
+│   │   ├── coinbase-sync.js    # Coinbase Commerce payment polling
+│   │   ├── gsc.js              # Google Search Console OAuth helpers
+│   │   ├── gsc-sync.js         # GSC keyword data sync
 │   │   └── withAuth.js         # Auth middleware for API routes
 │   ├── pages/
 │   │   ├── api/                # API routes (collect, auth, analytics, cron)
